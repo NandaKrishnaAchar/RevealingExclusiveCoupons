@@ -1,0 +1,203 @@
+<!--
+Dummy Shopping Website (single-file)
+- Purpose: collect Date of Birth client-side only and generate a coupon code.
+- Privacy: This page DOES NOT send any data to servers. All logic runs in the browser and any coupon is stored only in localStorage (so it's only on the user's device).
+- How to use: save this file as `index.html` and open in a browser. To host for free, follow instructions in the chat (GitHub Pages or Netlify).
+-->
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Yo!! Get Your Amazon Coupons if you are YOUNG!</title>
+  <style>
+    :root{--accent:#0b74de;--muted:#666}
+    body{font-family:Inter, system-ui, -apple-system, Roboto, "Segoe UI", Arial; margin:0;background:#f7f9fc;color:#111}
+    .container{max-width:900px;margin:4rem auto;padding:2rem;background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(20,30,50,0.06)}
+    header{display:flex;align-items:center;gap:1rem}
+    .logo{width:56px;height:56px;background:linear-gradient(135deg,var(--accent),#6ec6ff);border-radius:12px;display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+    h1{margin:0;font-size:1.6rem}
+    p.lead{color:var(--muted);margin-top:0.25rem}
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:1.5rem;margin-top:1.5rem}
+
+    /* Left column */
+    .products{display:flex;flex-direction:column;gap:12px}
+    .card{display:flex;gap:12px;align-items:center;padding:12px;border-radius:10px;border:1px solid #eef3fb}
+    .thumb{width:84px;height:84px;background:#eef7ff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:700}
+
+    /* Right (coupon) */
+    .couponBox{padding:16px;border-radius:10px;border:1px dashed #d7e9ff;background:#fbfeff}
+    label{display:block;margin-top:8px;font-weight:600}
+    input[type="date"], input[type="text"]{width:100%;padding:10px;border-radius:8px;border:1px solid #dfe9f6;background:white}
+    button{margin-top:12px;padding:10px 14px;border-radius:8px;border:0;background:var(--accent);color:white;font-weight:600;cursor:pointer}
+    .muted{color:var(--muted);font-size:0.9rem}
+    .coupon{margin-top:12px;padding:10px;border-radius:8px;background:linear-gradient(90deg,#fffbe6,#f7fff5);border:1px solid #eaf5e8}
+    .code{font-family:monospace;padding:6px 8px;background:#f2f7ff;border-radius:6px}
+    footer{margin-top:1.5rem;color:var(--muted);font-size:0.85rem}
+
+    @media (max-width:880px){.grid{grid-template-columns:1fr}.logo{width:48px;height:48px}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">DS</div>
+      <div>
+        <h1>Exclusive Amazon Deals</h1>
+        <p class="lead">Enter your date of birth to reveal a coupon. No data leaves your browser.</p>
+      </div>
+    </header>
+
+    <div class="grid">
+      <main>
+        <div class="products">
+          <div class="card">
+            <div class="thumb">SH</div>
+            <div>
+              <div style="font-weight:700">Sample Shoe</div>
+              <div class="muted">$59.99 • Comfortable everyday shoe</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="thumb">BK</div>
+            <div>
+              <div style="font-weight:700">Classic Backpack</div>
+              <div class="muted">$39.99 • 20L, water-resistant</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="thumb">TS</div>
+            <div>
+              <div style="font-weight:700">Everyday T‑shirt</div>
+              <div class="muted">$19.99 • 100% cotton</div>
+            </div>
+          </div>
+        </div>
+
+        <footer>
+          This is a non profit site to encourage young people to shop online. It does not process payments or store data on servers. All coupon logic runs locally in your browser.
+        </footer>
+      </main>
+
+      <aside>
+        <div class="couponBox">
+          <div style="font-weight:700">Get a coupon</div>
+          <div class="muted">Enter your date of birth below. This non profit webpage will only use the date locally to compute an age and generate a coupon — nothing is sent anywhere.</div>
+
+          <label for="dob">Date of birth</label>
+          <input id="dob" type="date" />
+
+          <label for="name">(Optional) Name</label>
+          <input id="name" type="text" placeholder="e.g., Alex" />
+
+          <button id="getCouponBtn">Reveal coupon</button>
+
+          <div id="result" class="coupon" style="display:none">
+            <div id="msg" style="font-weight:700"></div>
+            <div style="margin-top:8px">Your coupon code: <span id="code" class="code"></span></div>
+            <div style="margin-top:8px" class="muted">Saved only to your browser. Reload to keep using the same coupon on this device.</div>
+            <div style="margin-top:8px"><button id="copyBtn">Copy code</button> <button id="clearBtn" style="background:#eee;color:#111">Clear local coupon</button></div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;font-size:0.9rem;color:var(--muted)">
+          WebPage behavior:
+          <ul style="margin:6px 0 0 18px">
+            <li>Client-only: no server calls, no analytics.</li>
+            <li>Generates a coupon based on age buckets (fun logic).</li>
+            <li>Stores coupon in <code>localStorage</code> only for convenience.</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    // Demo coupon logic — runs only in the browser
+    const btn = document.getElementById('getCouponBtn');
+    const dobInput = document.getElementById('dob');
+    const nameInput = document.getElementById('name');
+    const result = document.getElementById('result');
+    const msg = document.getElementById('msg');
+    const codeEl = document.getElementById('code');
+    const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    function calcAge(dobStr){
+      if(!dobStr) return null;
+      const dob = new Date(dobStr);
+      if(isNaN(dob)) return null;
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if(m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+      return age;
+    }
+
+    function randomSuffix(len=4){
+      const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+      let s='';
+      for(let i=0;i<len;i++) s += chars[Math.floor(Math.random()*chars.length)];
+      return s;
+    }
+
+    function generateCoupon(age, name){
+      // simple deterministic-ish coupon per device: base + suffix
+      let bucket = 'GEN';
+      if(age === null) bucket = 'ANON';
+      else if(age < 18) bucket = 'YNG';
+      else if(age < 30) bucket = 'Y30';
+      else if(age < 50) bucket = 'M30';
+      else bucket = 'S50';
+
+      // include first letter of name if provided
+      const initial = (name || '').trim().charAt(0).toUpperCase() || 'X';
+      const suffix = randomSuffix(5);
+      return `${bucket}-${initial}-${suffix}`;
+    }
+
+    function showCoupon(coupon, age){
+      msg.textContent = age === null ? 'Here is your exclusive coupon' : `You are ${age} years old — enjoy!`;
+      codeEl.textContent = coupon;
+      result.style.display = 'block';
+    }
+
+    function saveCouponToLocal(coupon){
+      try{ localStorage.setItem('demo_shop_coupon', JSON.stringify({coupon,ts:Date.now()})); }catch(e){/* ignore */}
+    }
+
+    function loadCouponFromLocal(){
+      try{ const s = localStorage.getItem('demo_shop_coupon'); if(!s) return null; return JSON.parse(s).coupon; }catch(e){return null}
+    }
+
+    // If a coupon already exists locally, show it
+    (function(){
+      const existing = loadCouponFromLocal();
+      if(existing){ showCoupon(existing, null); }
+    })();
+
+    btn.addEventListener('click', ()=>{
+      const dob = dobInput.value;
+      const name = nameInput.value || '';
+      const age = calcAge(dob);
+      const coupon = generateCoupon(age, name);
+      saveCouponToLocal(coupon);
+      showCoupon(coupon, age);
+    });
+
+    copyBtn.addEventListener('click', ()=>{
+      const text = codeEl.textContent;
+      if(!text) return;
+      navigator.clipboard?.writeText(text).then(()=>{ copyBtn.textContent='Copied!'; setTimeout(()=>copyBtn.textContent='Copy code',1500); }).catch(()=>{});
+    });
+
+    clearBtn.addEventListener('click', ()=>{
+      try{ localStorage.removeItem('demo_shop_coupon'); result.style.display='none'; alert('Local coupon cleared.'); }catch(e){}}
+    );
+  </script>
+</body>
+</html>
+
