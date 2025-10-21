@@ -1,9 +1,3 @@
-<!--
-Dummy Shopping Website (single-file)
-- Privacy: This page DOES NOT send any data to servers. All logic runs in the browser and any coupon is stored only in localStorage (so it's only on the user's device).
-- How to use: save this file as `index.html` and open in a browser. To host for free, follow instructions in the chat (GitHub Pages or Netlify).
--->
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -70,7 +64,7 @@ Dummy Shopping Website (single-file)
           <div class="card">
             <div class="thumb">TS</div>
             <div>
-              <div style="font-weight:700">Everyday T‑shirt</div>
+              <div style="font-weight:700">Everyday T-shirt</div>
               <div class="muted">$19.99 • 100% cotton</div>
             </div>
           </div>
@@ -86,8 +80,8 @@ Dummy Shopping Website (single-file)
           <div style="font-weight:700">Get a coupon</div>
           <div class="muted">This non profit webpage will only use the date locally to compute an age and generate a coupon — nothing is sent anywhere.</div>
 
-          <label for="dob">Please prove you are young and below 25years of age to prevent from malicious users.</label>
-          <input id="dob" type="date" />
+          <label for="dob">Please prove you are young and below 25 years of age to prevent from malicious users.</label>
+          <input id="dob" type="date" required />
 
           <label for="name">(Optional) Name</label>
           <input id="name" type="text" placeholder="e.g., Alex" />
@@ -96,6 +90,7 @@ Dummy Shopping Website (single-file)
 
           <div id="result" class="coupon" style="display:none">
             <div id="msg" style="font-weight:700"></div>
+            <div style="margin-top:8px">Your date of birth: <span id="dobDisplay" class="code"></span></div>
             <div style="margin-top:8px">Your coupon code: <span id="code" class="code"></span></div>
             <div style="margin-top:8px" class="muted">Saved only to your browser. Reload to keep using the same coupon on this device.</div>
             <div style="margin-top:8px"><button id="copyBtn">Copy code</button> <button id="clearBtn" style="background:#eee;color:#111">Clear local coupon</button></div>
@@ -115,13 +110,13 @@ Dummy Shopping Website (single-file)
   </div>
 
   <script>
-    // Demo coupon logic — runs only in the browser
     const btn = document.getElementById('getCouponBtn');
     const dobInput = document.getElementById('dob');
     const nameInput = document.getElementById('name');
     const result = document.getElementById('result');
     const msg = document.getElementById('msg');
     const codeEl = document.getElementById('code');
+    const dobDisplay = document.getElementById('dobDisplay');
     const copyBtn = document.getElementById('copyBtn');
     const clearBtn = document.getElementById('clearBtn');
 
@@ -144,59 +139,59 @@ Dummy Shopping Website (single-file)
     }
 
     function generateCoupon(age, name){
-      // simple deterministic-ish coupon per device: base + suffix
       let bucket = 'GEN';
       if(age === null) bucket = 'ANON';
       else if(age < 18) bucket = 'YNG';
       else if(age < 30) bucket = 'Y30';
       else if(age < 50) bucket = 'M30';
       else bucket = 'S50';
-
-      // include first letter of name if provided
       const initial = (name || '').trim().charAt(0).toUpperCase() || 'X';
       const suffix = randomSuffix(5);
       return `${bucket}-${initial}-${suffix}`;
     }
 
-    function showCoupon(coupon, age){
+    function showCoupon(coupon, age, dobStr){
       msg.textContent = age === null ? 'Here is your exclusive coupon' : `You are ${age} years old — enjoy!`;
       codeEl.textContent = coupon;
+      dobDisplay.textContent = dobStr || 'N/A';
       result.style.display = 'block';
     }
 
-    function saveCouponToLocal(coupon){
-      try{ localStorage.setItem('demo_shop_coupon', JSON.stringify({coupon,ts:Date.now()})); }catch(e){/* ignore */}
+    function saveCouponToLocal(coupon, dob){
+      try{ localStorage.setItem('demo_shop_coupon', JSON.stringify({coupon, dob, ts:Date.now()})); }catch(e){}
     }
 
     function loadCouponFromLocal(){
-      try{ const s = localStorage.getItem('demo_shop_coupon'); if(!s) return null; return JSON.parse(s).coupon; }catch(e){return null}
+      try{ const s = localStorage.getItem('demo_shop_coupon'); if(!s) return null; return JSON.parse(s); }catch(e){return null}
     }
 
-    // If a coupon already exists locally, show it
     (function(){
       const existing = loadCouponFromLocal();
-      if(existing){ showCoupon(existing, null); }
+      if(existing){ showCoupon(existing.coupon, null, existing.dob); }
     })();
 
     btn.addEventListener('click', ()=>{
       const dob = dobInput.value;
+      if(!dob){
+        alert('Please enter your date of birth to continue!');
+        return;
+      }
       const name = nameInput.value || '';
       const age = calcAge(dob);
       const coupon = generateCoupon(age, name);
-      saveCouponToLocal(coupon);
-      showCoupon(coupon, age);
+      saveCouponToLocal(coupon, dob);
+      showCoupon(coupon, age, dob);
     });
 
     copyBtn.addEventListener('click', ()=>{
       const text = codeEl.textContent;
       if(!text) return;
-      navigator.clipboard?.writeText(text).then(()=>{ copyBtn.textContent='Copied!'; setTimeout(()=>copyBtn.textContent='Copy code',1500); }).catch(()=>{});
+      navigator.clipboard?.writeText(text).then(()=>{ copyBtn.textContent='Copied!'; setTimeout(()=>copyBtn.textContent='Copy code',1500); });
     });
 
     clearBtn.addEventListener('click', ()=>{
-      try{ localStorage.removeItem('demo_shop_coupon'); result.style.display='none'; alert('Local coupon cleared.'); }catch(e){}}
-    );
+      try{ localStorage.removeItem('demo_shop_coupon'); result.style.display='none'; alert('Local coupon cleared.'); }catch(e){}
+    });
   </script>
 </body>
 </html>
-
